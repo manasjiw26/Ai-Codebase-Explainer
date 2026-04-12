@@ -4,10 +4,21 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node src/server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/manasjiw26/Ai-Codebase-Explainer.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs"
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/manasjiw26/Ai-Codebase-Explainer/issues"
+  },
+  "homepage": "https://github.com/manasjiw26/Ai-Codebase-Explainer#readme",
+  "dependencies": {
+    "express": "^5.2.1"
+  }
 }
