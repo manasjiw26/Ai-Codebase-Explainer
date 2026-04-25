@@ -4,4 +4,4 @@ tempRepo/
 dist/
 build/
 *.log
-.DS_Store
+.DS_StoretempRepo/
