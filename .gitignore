@@ -5,3 +5,4 @@ dist/
 build/
 *.log
 .DS_StoretempRepo/
+.DS_Store
