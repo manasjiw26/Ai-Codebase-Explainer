@@ -1,3 +1,7 @@
 node_modules/
 .env
-
+tempRepo/
+dist/
+build/
+*.log
+.DS_Store
