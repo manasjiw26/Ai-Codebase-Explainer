@@ -1,33 +1,39 @@
 const { exec } = require('child_process');
-const fs = require('fs');
+const fs = require('fs/promises');
 const path = require('path');
+const os = require('os');
+const { promisify } = require('util');
+const execAsync = promisify(exec);
 
-function cloneRepository(repositoryUrl) {
-    const targetDir = path.join(process.cwd(), 'tempRepo');
+/**
+ * Clones a GitHub repository into a unique temporary directory.
+ * @param {string} repoUrl - The URL of the GitHub repository.
+ * @returns {Promise<string>} - The absolute path to the cloned repository.
+ */
+async function cloneRepository(repoUrl) {
+    // Double-check validation (defensive programming)
+    const pattern = /^https:\/\/github\.com\/[\w.-]+\/[\w.-]+(\.git)?$/;
+    if (!pattern.test(repoUrl)) {
+        throw new Error('Invalid GitHub URL');
+    }
 
-    return new Promise((resolve, reject) => {
-        // Clear existing directory if it exists
-        if (fs.existsSync(targetDir)) {
-            try {
-                fs.rmSync(targetDir, { recursive: true, force: true });
-            } catch (err) {
-                return reject(new Error(`Failed to clear existing directory: ${err.message}`));
-            }
-        }
+    // Create a unique directory name
+    const repoName = repoUrl.split('/').pop().replace('.git', '');
+    const targetDir = path.join(os.tmpdir(), `repo-${repoName}-${Date.now()}`);
 
-        exec(`git clone ${repositoryUrl} tempRepo`, (error, stdout, stderr) => {
-            if (error) {
-                console.error(`Error cloning repository: ${error.message}`);
-                return reject(error);
-            }
-            // Git progress is sent to stderr, so we only log it unless we want to be strict
-            if (stderr) {
-                console.log(`Git output: ${stderr}`);
-            }
-            console.log(`Repository cloned successfully: ${stdout}`);
-            resolve(stdout);
-        });
-    });
+    try {
+        console.log(`Cloning ${repoUrl} into ${targetDir}...`);
+        
+        // Execute the clone command
+        // Note: Using targetDir as the second argument ensures it clones into that specific unique folder
+        await execAsync(`git clone ${repoUrl} ${targetDir}`);
+        
+        console.log(`Repository cloned successfully to ${targetDir}`);
+        return targetDir;
+    } catch (error) {
+        console.error(`Git clone failed: ${error.message}`);
+        throw new Error(`Failed to clone repository: ${error.message}`);
+    }
 }
 
 module.exports = { cloneRepository };

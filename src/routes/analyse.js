@@ -1,21 +1,18 @@
-const express = require('express')
+const express = require('express');
 const router = express.Router();
-router.post('/',(req,res)=>{
-    const { repoUrl } = req.body;
-    if(!repoUrl){
-        return res.status(400).json({error : 'RepoURL is required'});
-    }
-    res.status(202).json({message : 'Analysis Started',id : 'temp-id-123',repoUrl});
+const { 
+    startAnalysis, 
+    getAnalysisStatus, 
+    deleteAnalysis 
+} = require('../controllers/analyseController');
 
-});
-router.get('/:id',(req,res)=>
-{
-    const {id} = req.params;
-    res.status(200).json({status :'pending',id});
-});
+// POST /api/analyze - Start a new analysis
+router.post('/', startAnalysis);
 
-router.delete('/:id' ,(req,res)=>{
-    const {id} = req.params;
-    res.status(200).json({status : 'Analysis cancelled',id});
-});
+// GET /api/analyze/:id - Check analysis status
+router.get('/:id', getAnalysisStatus);
+
+// DELETE /api/analyze/:id - Cancel an analysis
+router.delete('/:id', deleteAnalysis);
+
 module.exports = router;
