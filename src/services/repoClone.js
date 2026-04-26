@@ -23,11 +23,11 @@ async function cloneRepository(repoUrl) {
 
     try {
         console.log(`Cloning ${repoUrl} into ${targetDir}...`);
-        
+
         // Execute the clone command
         // Note: Using targetDir as the second argument ensures it clones into that specific unique folder
         await execAsync(`git clone ${repoUrl} ${targetDir}`);
-        
+
         console.log(`Repository cloned successfully to ${targetDir}`);
         return targetDir;
     } catch (error) {
@@ -36,4 +36,15 @@ async function cloneRepository(repoUrl) {
     }
 }
 
-module.exports = { cloneRepository };
+
+async function cleanupRepository(targetDir) {
+    try {
+        await fs.rm(targetDir, { recursive: true, force: true });
+        console.log(`Cleaned up: ${targetDir}`);
+    } catch (err) {
+        console.error(`Cleanup failed: ${err.message}`);
+        throw err;
+    }
+}
+
+module.exports = { cloneRepository, cleanupRepository };

@@ -1,4 +1,5 @@
-const { cloneRepository } = require('../services/repoClone');
+const { cloneRepository, cleanupRepository } = require('../services/repoClone');
+const { traverseDirectory } = require('../services/fileTraverser');
 const { isValidURL } = require('../utils/URL_Validation');
 
 const startAnalysis = async (req, res, next) => {
@@ -15,12 +16,21 @@ const startAnalysis = async (req, res, next) => {
 
         // Trigger cloning
         const targetDir = await cloneRepository(repoUrl);
-        
-        res.status(202).json({ 
-            message: 'Analysis started', 
+
+        res.status(202).json({
+            message: 'Analysis started',
             repoUrl,
             tempPath: targetDir // Helpful for debugging for now
         });
+        traverseDirectory(targetDir).then(stats => {
+            console.log('Analysis complete:', stats);
+        }).catch(err => {
+            console.error('Error during analysis:', err);
+        }).finally(() => {
+            cleanupRepository(targetDir);
+        });
+
+        // cleanupRepository(targetDir);
     } catch (err) {
         next(err);
     }
@@ -36,7 +46,7 @@ const deleteAnalysis = (req, res) => {
     res.status(200).json({ status: 'Analysis cancelled', id });
 };
 
-module.exports = { 
+module.exports = {
     startAnalysis,
     getAnalysisStatus,
     deleteAnalysis
