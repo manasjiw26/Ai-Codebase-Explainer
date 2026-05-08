@@ -1,8 +1,20 @@
+# Dependencies
 node_modules/
 .env
+.env.local
+.env.production
+
+# Temporary cloned repos
 tempRepo/
+
+# Build output
 dist/
 build/
+
+# Logs
 *.log
-.DS_StoretempRepo/
+npm-debug.log*
+
+# OS files
 .DS_Store
+Thumbs.db
