@@ -9,6 +9,10 @@ function buildDependencyGraph(parsedFiles) {
     const graph = {};
 
     parsedFiles.forEach(file => {
+        // Skip files that couldn't be parsed (e.g. Python, HTML, binary files)
+        // where imports was never populated by the AST parser
+        if (!file.imports) return;
+
         // We only care about local imports (ones starting with '.' or '..')
         // We ignore external packages like 'express' or 'mongoose'
         const localImports = file.imports

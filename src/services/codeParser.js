@@ -1,7 +1,19 @@
 const babelParser = require('@babel/parser');
 const traverse = require('@babel/traverse').default;
+const path = require('path');
 
-function parseCode(code) {
+// Check if file is JavaScript/TypeScript based on extension
+function isJavaScriptFile(filePath) {
+    const ext = path.extname(filePath).toLowerCase();
+    return ['.js', '.ts', '.jsx', '.tsx'].includes(ext);
+}
+
+function parseCode(code, filePath = '') {
+    // Skip parsing for non-JavaScript files
+    if (filePath && !isJavaScriptFile(filePath)) {
+        return null;
+    }
+    
     try {
         // This takes the raw string of code and turns it into an AST tree!
         const ast = babelParser.parse(code, {
@@ -69,5 +81,6 @@ function extractFunctions(ast) {
 module.exports = {
     parseCode,
     extractImports,
-    extractFunctions
+    extractFunctions,
+    isJavaScriptFile
 };

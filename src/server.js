@@ -17,9 +17,15 @@ mongoose.connect(process.env.MONGODB_URI)
 app.use(express.json());
 app.use(logger);
 
+console.log('\n🚀 Routes initialized:');
+console.log('   POST   /api/analyze - Start analysis');
+console.log('   GET    /api/analyze/:id - Get status');
+console.log('   DELETE /api/analyze/:id - Cancel analysis');
+console.log('   GET    /health - Health check\n');
 
 app.use('/api/analyze', analyseRoutes);
 app.get('/health', (req, res) => {
+    console.log('✅ Health check requested');
     res.status(200).json({ status: 'ok', uptime: process.uptime() });
 });
 app.use(errorHandler);
