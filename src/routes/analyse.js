@@ -3,7 +3,8 @@ const router = express.Router();
 const { 
     startAnalysis, 
     getAnalysisStatus, 
-    deleteAnalysis 
+    deleteAnalysis,
+    chatWithAnalysis
 } = require('../controllers/analyseController');
 
 // POST /api/analyze - Start a new analysis
@@ -14,5 +15,8 @@ router.get('/:id', getAnalysisStatus);
 
 // DELETE /api/analyze/:id - Cancel an analysis
 router.delete('/:id', deleteAnalysis);
+
+// POST /api/analyze/:id/chat - Chat about the completed analysis
+router.post('/:id/chat', chatWithAnalysis);
 
 module.exports = router;

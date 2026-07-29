@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Codebase Explainer</title>
+    <meta name="description" content="A minimalist interface for exploring repositories through conversation." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Playfair+Display:wght@600;700;800&family=Source+Serif+4:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="hero">
+        <div class="hero__copy">
+          <div class="hero__topbar">
+            <p class="eyebrow">Repository Intelligence</p>
+            <label class="theme-switch" for="themeToggle" aria-label="Theme switcher">
+              <span class="theme-switch__label">Theme</span>
+              <span class="theme-switch__track">
+                <input class="theme-switch__input" id="themeToggle" type="checkbox" />
+                <span class="theme-switch__thumb"></span>
+              </span>
+            </label>
+          </div>
+          <h1>Understand a codebase with discipline.</h1>
+          <p class="lead">
+            Submit a repository, inspect the analysis, and then continue the conversation with your AI companion.
+          </p>
+        </div>
+        <div class="hero__meta">
+          <span class="status-pill" id="serverStatus">Checking connection…</span>
+          <div class="rule"></div>
+          <p class="tiny">Built for slow reading, sharp thinking, and clear structure.</p>
+        </div>
+      </header>
+
+      <main class="dashboard">
+        <section class="panel panel--analysis">
+          <div class="panel__header">
+            <div>
+              <p class="eyebrow">Analysis</p>
+              <h2>Begin with a repository URL</h2>
+            </div>
+            <span class="panel__badge" id="analysisBadge">Idle</span>
+          </div>
+
+          <form id="analysisForm" class="analysis-form">
+            <label class="sr-only" for="repoUrl">Repository URL</label>
+            <input
+              id="repoUrl"
+              name="repoUrl"
+              type="url"
+              placeholder="https://github.com/owner/repository"
+              required
+            />
+            <button type="submit">Start analysis</button>
+          </form>
+
+          <div class="analysis-progress" id="analysisProgress" aria-live="polite">
+            <p class="analysis-progress__text">Awaiting your first repository.</p>
+          </div>
+
+          <div class="insight-grid">
+            <article class="insight-card">
+              <h3>What happens next</h3>
+              <ul>
+                <li>Repository is cloned and scanned</li>
+                <li>Architecture and dependencies are mapped</li>
+                <li>AI explains the system in plain language</li>
+              </ul>
+            </article>
+            <article class="insight-card">
+              <h3>State</h3>
+              <p id="analysisSummary">The analysis panel is ready for your first request.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="panel panel--chat">
+          <div class="panel__header">
+            <div>
+              <p class="eyebrow">Conversation</p>
+              <h2>Ask about the codebase</h2>
+            </div>
+            <span class="panel__badge panel__badge--dark">AI ready</span>
+          </div>
+
+          <div class="chat-window" id="chatWindow">
+            <div class="message message--assistant">
+              <p><strong>Assistant</strong></p>
+              <p>Start the analysis and I’ll help you understand the structure, entry points, and architecture.</p>
+            </div>
+          </div>
+
+          <form id="chatForm" class="chat-form">
+            <label class="sr-only" for="chatInput">Message</label>
+            <input id="chatInput" name="chatInput" type="text" placeholder="Ask about modules, flows, or architecture" />
+            <button type="submit">Send</button>
+          </form>
+        </section>
+      </main>
+    </div>
+
+    <script src="/app.js"></script>
+  </body>
+</html>

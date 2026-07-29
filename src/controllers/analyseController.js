@@ -3,7 +3,9 @@ const { traverseDirectory } = require('../services/fileTraverser');
 const { isValidURL } = require('../utils/URL_Validation');
 const { parseCode, extractImports, extractFunctions } = require('../services/codeParser');
 const { buildDependencyGraph } = require('../services/dependencyGraph');
-const { generateExplanation } = require('../services/aiEngine');
+const { selectImportantFiles } = require('../services/filePrioritizer');
+const { buildRepositoryContext } = require('../services/contextBuilder');
+const { generateExplanation, generateChatReply } = require('../services/aiEngine');
 const Analysis = require('../models/Analysis');
 
 const startAnalysis = async (req, res, next) => {
@@ -25,10 +27,10 @@ const startAnalysis = async (req, res, next) => {
             return res.status(400).json({ error: 'Invalid GitHub repository URL' });
         }
 
-        // --- NEW: Create a "pending" record in the database FIRST ---
         const analysisRecord = await Analysis.create({
             repoUrl: repoUrl,
-            status: 'pending'
+            status: 'queued',
+            progress: 10
         });
 
         // Trigger cloning in the background
@@ -44,10 +46,14 @@ const startAnalysis = async (req, res, next) => {
         });
 
         traverseDirectory(targetDir).then(async stats => {
+            await Analysis.findByIdAndUpdate(analysisRecord._id, { status: 'running', progress: 20 });
             console.log('\n📂 Directory traversal complete.');
             console.log(`   Found ${stats.fileContents.length} files to process.\n`);
 
-            stats.fileContents.forEach(file => {
+            const prioritizedFiles = selectImportantFiles(stats.fileContents, 30);
+            await Analysis.findByIdAndUpdate(analysisRecord._id, { progress: 40 });
+
+            prioritizedFiles.forEach(file => {
                 const ast = parseCode(file.content, file.path);
                 if (ast) {
                     file.imports = extractImports(ast);
@@ -58,10 +64,10 @@ const startAnalysis = async (req, res, next) => {
                 }
             });
 
-            const dependencyGraph = buildDependencyGraph(stats.fileContents);
+            const dependencyGraph = buildDependencyGraph(prioritizedFiles);
+            await Analysis.findByIdAndUpdate(analysisRecord._id, { progress: 70 });
             console.log('\n🔗 Dependency graph built.');
 
-            // Spinner while waiting for AI
             const frames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
             let i = 0;
             const spinner = setInterval(() => {
@@ -70,15 +76,17 @@ const startAnalysis = async (req, res, next) => {
 
             let explanation;
             try {
+                const repositoryContext = buildRepositoryContext(prioritizedFiles);
                 explanation = await generateExplanation({
-                    files: stats.fileContents,
-                    architecture: dependencyGraph
+                    files: prioritizedFiles,
+                    architecture: dependencyGraph,
+                    context: repositoryContext
                 });
             } catch (aiErr) {
                 clearInterval(spinner);
                 process.stdout.write('\r\x1b[K');
                 console.error('❌ AI generation failed:', aiErr.message ?? aiErr);
-                await Analysis.findByIdAndUpdate(analysisRecord._id, { status: 'failed' });
+                await Analysis.findByIdAndUpdate(analysisRecord._id, { status: 'failed', errorMessage: aiErr.message ?? 'AI request failed', progress: 100 });
                 return;
             }
 
@@ -91,9 +99,11 @@ const startAnalysis = async (req, res, next) => {
             try {
                 await Analysis.findByIdAndUpdate(analysisRecord._id, {
                     status: 'completed',
+                    progress: 100,
                     summary: explanation.summary,
                     entryPoint: explanation.entryPoint,
-                    architecture: explanation.architecture
+                    architecture: explanation.architecture,
+                    errorMessage: null
                 });
                 console.log(`✅ DB record updated. Analysis ID: ${analysisRecord._id}`);
             } catch (dbErr) {
@@ -102,7 +112,7 @@ const startAnalysis = async (req, res, next) => {
 
         }).catch(async err => {
             console.error('❌ Error during analysis pipeline:', err);
-            await Analysis.findByIdAndUpdate(analysisRecord._id, { status: 'failed' });
+            await Analysis.findByIdAndUpdate(analysisRecord._id, { status: 'failed', errorMessage: err.message ?? 'Analysis failed', progress: 100 });
         }).finally(() => {
             cleanupRepository(targetDir);
         });
@@ -133,8 +143,40 @@ const deleteAnalysis = (req, res) => {
     res.status(200).json({ status: 'Analysis cancelled', id });
 };
 
+const chatWithAnalysis = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const { message } = req.body;
+
+        if (!message || !message.trim()) {
+            return res.status(400).json({ error: 'message is required' });
+        }
+
+        const analysis = await Analysis.findById(id);
+        if (!analysis) {
+            return res.status(404).json({ error: 'Analysis not found' });
+        }
+
+        if (analysis.status !== 'completed') {
+            return res.status(409).json({ error: 'Analysis is still in progress. Please wait until it completes.' });
+        }
+
+        const reply = await generateChatReply({
+            repoUrl: analysis.repoUrl,
+            summary: analysis.summary || 'No summary available yet.',
+            entryPoint: analysis.entryPoint || 'No entry point available yet.',
+            architecture: analysis.architecture || 'No architecture summary available yet.'
+        }, message);
+
+        res.status(200).json({ reply });
+    } catch (error) {
+        next(error);
+    }
+};
+
 module.exports = {
     startAnalysis,
     getAnalysisStatus,
-    deleteAnalysis
+    deleteAnalysis,
+    chatWithAnalysis
 };

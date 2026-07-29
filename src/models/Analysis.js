@@ -7,8 +7,15 @@ const analysisSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['pending', 'completed', 'failed'],
-        default: 'pending'
+        enum: ['queued', 'running', 'completed', 'failed'],
+        default: 'queued'
+    },
+    progress: {
+        type: Number,
+        default: 0
+    },
+    errorMessage: {
+        type: String
     },
     summary: {
         type: String

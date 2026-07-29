@@ -9,12 +9,14 @@ const errorHandler = require('./middleware/errorHandler');
 const analyseRoutes = require('./routes/analyse');
 
 const app = express();
+const path = require('path');
 
 mongoose.connect(process.env.MONGODB_URI)
     .then(() => console.log('Connected to MongoDB'))
     .catch((err) => console.error('MongoDB Connection Error:', err));
 
 app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
 app.use(logger);
 
 console.log('\n🚀 Routes initialized:');
@@ -24,6 +26,9 @@ console.log('   DELETE /api/analyze/:id - Cancel analysis');
 console.log('   GET    /health - Health check\n');
 
 app.use('/api/analyze', analyseRoutes);
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 app.get('/health', (req, res) => {
     console.log('✅ Health check requested');
     res.status(200).json({ status: 'ok', uptime: process.uptime() });
